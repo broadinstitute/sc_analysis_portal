@@ -1,0 +1,107 @@
+FROM debian:TODO
+MAINTAINER ttickle@broadinstitute.org
+
+######################
+## Environment
+######################
+
+## Constants
+### SOFTWARE versions
+ENV PICARD_VERSION 2.0.1
+ENV R_VERSION 3.1.1-1
+ENV RNASEQQC_VERSION v1.1.8
+ENV RSEM_VERSION v1.2.31
+ENV RESOURCES_VERSION v1
+
+### locations
+ENV BIN /usr/local/bin
+ENV DATA /usr/local/data
+ENV RESOURCES /usr/local/resources
+ENV SRC /usr/local/src
+
+### URLS
+ENV PICARD_URL https://github.com/broadinstitute/picard/releases/download/${PICARD_VERSION}/picard-tools-${PICARD_VERSION}.zip
+ENV RESOURCES_URL https://data.broadinstitute.org/single_cell_portal/rsem/rsem_${RESOURCES_VERSION}.tar.gz
+
+## Make required non-standard directories
+RUN mkdir {$DATA,$RESOURCES}
+
+## Set path
+RUN PATH ${PATH}
+
+## Set python path
+RUN PYTHONPATH $PYTHONPATH
+
+######################
+## Dependencies and Tools
+######################
+##############
+## Helper tools
+RUN apt-get update
+RUN apt-get install -y git
+RUN apt-get install -y unzip
+RUN apt-get install -y wget
+
+##############
+## Install Bowtie
+RUN apt-get install -y bowtie
+
+##############
+## C++ for RSEM
+RUN apt-get install -y build-essential \
+    gcc-multilib
+
+##############
+## FastQC
+RUN wget http://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.5.zip -P ${BIN} && \
+    unzip ${BIN}/fastqc_v0.11.5.zip -d ${BIN} && \
+    chmod +x ${BIN}/FastQC/fastqc
+
+##############
+## JAVA 1.8 for PICARD tools
+RUN echo "deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main" | tee /etc/apt/sources.list.d/webupd8team-java.list && \
+    echo "deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main" | tee -a /etc/apt/sources.list.d/webupd8team-java.list && \
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys EEA14886 && \
+    apt-get update && \
+    apt-get install oracle-java8-installer
+
+##############
+## PICARD tools
+RUN wget -P ${SRC} ${PICARD_URL} && \
+    unzip ${SRC}/picard-tools-${PICARD_VERSION}.zip && \
+    mv ${SRC}/picard-tools-${PICARD_VERSION}/* ${BIN} && \
+    rm -r ${SRC}/picard-tools-${PICARD_VERSION} && \
+    rm -r ${SRC}/picard-tools-${PICARD_VERSION}.zip
+
+##############
+## Perl for RSEM
+RUN apt-get install -y perl perl-base
+
+##############
+## R for RSEM
+RUN apt-get install -y r-base=${R_VERSION}
+
+##############
+## RSEM
+WORKDIR ${SRC}
+RUN git clone https://github.com/deweylab/RSEM.git && \
+    mv ${SRC}/RSEM && \
+    git checkout ${RSEM_VERSION} && \
+    make && \
+    mv ${BIN}
+
+##############
+## RNASEQ QC
+RUN wget http://www.broadinstitute.org/cancer/cga/tools/rnaseqc/RNA-SeQC_${RNASEQQC_VERSION}.jar
+
+######################
+# Resources
+######################
+RUN wget -P ${RESOURCES} ${TOOL_RESOURCES_URL} && \
+    tar -xvf ${RESOURCES}/${TOOL_RESOURCES}.tar.gz -C ${RESOURCES}
+
+######################
+# Specify default behavior
+# -h ?
+######################
+echo "Environment for running the Single Cell Portal QC and Expression Tools"

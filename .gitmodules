@@ -1,0 +1,3 @@
+[submodule "src/SciEDPipeR"]
+	path = src/SciEDPipeR
+	url = https://github.com/SciEDPipeR/SciEDPipeR.git

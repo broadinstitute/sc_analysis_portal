@@ -1,36 +1,45 @@
 workflow single_cell_analysis_portal {
 
+    Array[File] sample_names
+    File in_biological_batches
     File in_gtf
+    File in_index
+    File in_left_sample
+    File in_negative_controls
     File in_output_dir
     File in_reference
     File in_ref_flat
-    File in_index
     File in_ribosome_interval
-    File in_left_sample
     File in_right_sample
+    File in_technical_batches
     String in_library
     String in_machine
-    String in_plateform
+    String in_platform
     String in_sample_name
     Int in_threads
 
-    call run_pipeline {
-        input: gtf=${in_gtf},
-               out_dir=${in_output_dir},
-               reference_fasta=${in_reference},
-               reference_flat=${in_ref_flat},
-               rsem_index=${in_index},
-               rrna_intervals=${in_ribosome_interval},
-               sample_left=${in_left_sample},
-               sample_right=${in_right_sample},
-               library=${in_library},
-               machine=${in_machine},
-               name=${in_name},
-               plateform=${in_plateform},
-               threads=${in_threads},
+    scatter (name in sample_names){
+        call run_pipeline {
+            input: gtf=${in_gtf},
+                   out_dir=${in_output_dir},
+                   reference_fasta=${in_reference},
+                   reference_flat=${in_ref_flat},
+                   rsem_index=${in_index},
+                   rrna_intervals=${in_ribosome_interval},
+                   sample_left=${in_left_sample},
+                   sample_right=${in_right_sample},
+                   library=${in_library},
+                   machine=${in_machine},
+                   sample_name=${in_sample_name},
+                   platform=${in_platform},
+                   threads=${in_threads},
+        }
+        call consolidate_metrics { input: files=run_pipeline.consolidated_qc, out_dir=in_output_dir }
+        call consolidate_counts { input: files=run_pipeline.rsem_gene_results, out_dir=in_output_dir }
+        call scone { input: count_matrix=consolidate_counts.out, technical_batches=${in_technical_batches}, biological_batches=${in_biological_batches}, negative_controls=${in_negative_controls}, out_dir=${in_out_dir}, qc_matrix=consoliate_metrics.out}
     }
 
-task run_pipeline {
+task align_qc {
     File gtf
     File out_dir
     File reference_fasta
@@ -41,36 +50,102 @@ task run_pipeline {
     File sample_right
     String library
     String machine
-    String name
-    String plateform
+    String sample_name
+    String platform
     Int threads
 
     command <<<
         single_cell_analysis.py \
-            --trim ${trim}
             --reference_fasta ${reference_fasta} \
             --reference_flat ${reference_flat} \
             --rsem_index ${rsem_index} \
-            --rib_intervals ${rrna_intervals} \
+            --rrna_intervals ${rrna_intervals} \
             --gtf ${gtf} \
             --sample_left ${sample_left} \
             --sample_right ${sample_right} \
             --add_machine ${machine} \
-            --add_name ${name} \
+            --add_name ${sample_name} \
             --add_library ${library} \
-            --add_plateform ${plateform} \
+            --add_platform ${platform} \
             --threads ${threads} \
-            --out ${out_dir}
+            --out_dir ${out_dir}
     >>>
 
     output {
-        File trimmed_left fastq = "${out_dir}/"
-        File trimmed_right fastq = "${out_dir}/"
-        File rsem_bam = "${out_dir}/bam/"
-        File prepped_bam = "${out_dir}/bam/"
+        File trim_1_paired = "${out_dir}/qc/rnaseqc/${sample_name}_1P.fq.gz"
+        File trim_1_unpiared = "${out_dir}/qc/rnaseqc/${sample_name}_1U.fq.gz"
+        File trim_2_paired = "${out_dir}/qc/rnaseqc/${sample_name}_2P.fq.gz"
+        File trim_2_unpiared = "${out_dir}/qc/rnaseqc/${sample_name}_2U.fq.gz"
+        File fastqc = "${out_dir}/qc/fast_qc/${sample_name}_fastqc_data.txt"
+        File rnaseqc = "${out_dir}/qc/rnaseq_qc/${sample_name}_metrics.tsv"
+        File rsem_gene_bam = "${out_dir}/bam/${sample_name}.genome.bam"
+        File rsem_gene_results = "${out_dir}/bam/${sample_name}.genes.results"
+        File rsem_trans_bam = "${out_dir}/bam/${sample_name}.transcript.bam"
+        File rsem_trans_results = "${out_dir}/bam/${sample_name}.isoforms.results"
+        File rsem_stats = "${out_dir}/bam/${sample_name}.stats"
+        File prepped_bam = "${out_dir}/bam/${sample_name}_arg_reorder_dedup.genome.bam"
+        File duplicate_metrics = "${out_dir}/qc/${sample_name}_duplicate_metrics.txt"
+        File rna_seq_metrics = "${out_dir}/qc/${sample_name}_collect_rna_seq_metrics.txt"
+        File library_metrics = "${out_dir}/qc/${sample_name}_estimate_library_complexity.txt"
+        File alignment_metrics = "${out_dir}/qc/${sample_name}_alignment_summary_metrics.txt"
+        File qc_insert_size_txt = "${out_dir}/qc/${sample_name}_insert_size.txt"
+        File qc_insert_size_pdf = "${out_dir}/qc/${sample_name}_insert_size.pdf"
+        File consolidated_qc = "${out_dir}/qc/${sample_name}_consolidate.tsv"
+        File consolidated_qc_log = "${out_dir}/qc/${sample_name}_consolidate.log"
     }
+}
 
-    runtime {
-        docker: "single_cell_portal"
+task consolidate_metrics {
+    Array[File] files
+    File out_dir
+    command <<<
+        combine_matrix.py \
+            --log "${out_dir}/qc/qc_matrix.log" \
+            --out "${out_dir}/qc/qc_matrix.tsv" \
+            ${sep=" " files}
+    >>>
+
+    output {
+        File log = "${out_dir}/qc/qc_matrix.log" \
+        File out = "${out_dir}/qc/qc_matrix.tsv"
+    }
+}
+
+task consolidate_counts {
+    Array[File] files
+    File out_dir
+    command <<<
+        combine_matrix.py \
+            --log "${out_dir}/raw_counts.tsv" \
+            --out "${out_dir}/raw_counts.log" \
+            --column  \
+            ${sep=" " files}
+    >>>
+    output {
+        File log = "${out_dir}/raw_counts.log"
+        File out = "${out_dir}/raw_counts.tsv"
+    }
+}
+
+task scone {
+    File count_matrix
+    File technical_batches
+    File biological_batches
+    File negative_controls
+    File out_dir
+    File qc_matrix
+
+    command <<<
+        ezbake.R --expr=${count_matrix} \
+                 --batch=${technical_batches} \
+                 --bio=${biological_batches} \
+                 --negcon=${negative_controls} \
+                 --qc=${qc_matrix} \
+                 --verbose=0 \
+                 --norm_adjust_bio=no \
+                 --out_dir="${out_dir}/normalizations"
+    >>>
+    output {
+        File "${out_dir}/normalizations"
     }
 }

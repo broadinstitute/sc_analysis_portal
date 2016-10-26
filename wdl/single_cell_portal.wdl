@@ -36,6 +36,7 @@ workflow single_cell_analysis_portal {
         }
         call consolidate_metrics { input: files=run_pipeline.consolidated_qc, out_dir=in_output_dir }
         call consolidate_counts { input: files=run_pipeline.rsem_gene_results, out_dir=in_output_dir }
+        call consolidate_tpms { input: files=run_pipeline.rsem_gene_results, out_dir=in_output_dir }
         call scone { input: count_matrix=consolidate_counts.out, technical_batches=${in_technical_batches}, biological_batches=${in_biological_batches}, negative_controls=${in_negative_controls}, out_dir=${in_out_dir}, qc_matrix=consoliate_metrics.out}
     }
 
@@ -118,12 +119,28 @@ task consolidate_counts {
         combine_matrix.py \
             --log "${out_dir}/raw_counts.tsv" \
             --out "${out_dir}/raw_counts.log" \
-            --column  \
+            --column "Counts" \
             ${sep=" " files}
     >>>
     output {
         File log = "${out_dir}/raw_counts.log"
         File out = "${out_dir}/raw_counts.tsv"
+    }
+}
+
+task consolidate_tpms {
+    Array[File] files
+    File out_dir
+    command <<<
+        combine_matrix.py \
+            --log "${out_dir}/raw_counts.tsv" \
+            --out "${out_dir}/raw_counts.log" \
+            --column "TPM" \
+            ${sep=" " files}
+    >>>
+    output {
+        File log = "${out_dir}/raw_tpms.log"
+        File out = "${out_dir}/raw_tpms.tsv"
     }
 }
 

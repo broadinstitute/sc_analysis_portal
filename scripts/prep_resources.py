@@ -13,8 +13,8 @@ __status__ = "Development"
 import os
 import sys
 # Add sciedpiper
-sys.path.insert(0,os.path.sep.join([os.path.dirname(os.path.realpath(__file__)), "SciEDPipeR"]))
-sys.path.insert(0,os.path.sep.join([os.path.dirname(os.path.realpath(__file__)), "SciEDPipeR", "sciedpiper"]))
+sys.path.insert(0,os.path.sep.join([os.path.dirname(os.path.realpath(__file__)), "..", "src", "SciEDPipeR"]))
+sys.path.insert(0,os.path.sep.join([os.path.dirname(os.path.realpath(__file__)), "..", "src", "SciEDPipeR", "sciedpiper"]))
 import sciedpiper.Command as Command
 import sciedpiper.PipelineRunner as PipelineRunner
 
@@ -61,6 +61,7 @@ class PrepareSingleCell( PipelineRunner.PipelineRunner ):
                                                       args_parsed.str_out_dir )
         rsem_index_prefix = os.path.join( args_parsed.str_out_dir,
                                           sample_name )
+        reduced_gtf = self.func_tag_file(project_gtf, "reduced" )
         ref_dict = self.func_switch_ext( project_fasta, ".dict" )
         ref_flat = self.func_switch_ext( project_fasta, ".refFlat" )
         ref_fai = project_fasta + ".fai"
@@ -114,15 +115,25 @@ class PrepareSingleCell( PipelineRunner.PipelineRunner ):
                                      lstr_cur_products=[ref_flat])
         commands.append(cmd_reflat)
 
+        # GTF
+        # Make reduced gtf
+        cmd_reduced_gtf = Command.Command(str_cur_command=" ".join(["ReduceGTF",
+                                                                    "GTF="+project_gtf,
+                                                                    "SEQUENCE_DICTIONARY="+ref_dict,
+                                                                    "O="+reduced_gtf]),
+                                          lstr_cur_dependencies=[project_gtf, ref_dict],
+                                          lstr_cur_products=[reduced_gtf])
+        commands.append(cmd_reduced_gtf)
+
         # Interval files
         cmdline_interval=" ".join(["CreateIntervalsFiles",
                                    "SEQUENCE_DICTIONARY="+ref_dict,
-                                   "REDUCED_GTF="+project_gtf,
+                                   "REDUCED_GTF="+reduced_gtf,
                                    "OUTPUT="+args_parsed.str_out_dir,
                                    "PREFIX="+sample_name])
         cmd_gene_intervals = Command.Command(str_cur_command=cmdline_interval,
                                              lstr_cur_dependencies=[ref_dict,
-                                                                    project_gtf],
+                                                                    reduced_gtf],
                                              lstr_cur_products=[ref_gene_interval,
                                                                 ref_rrna,
                                                                 ref_genic_interval])
@@ -130,6 +141,8 @@ class PrepareSingleCell( PipelineRunner.PipelineRunner ):
 
         ## RSEM Index
         rsem_index_cmdline = " ".join([ "rsem-prepare-reference",
+                                        "--bowtie",
+                                        "--bowtie2",
                                         "--gtf", project_gtf,
                                         project_fasta,
                                         rsem_index_prefix ])

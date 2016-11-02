@@ -21,6 +21,7 @@ ENV SRC /usr/local/src
 ### URLS
 ENV PICARD_URL https://github.com/broadinstitute/picard/releases/download/${PICARD_VERSION}/picard-tools-${PICARD_VERSION}.zip
 ENV RESOURCES_URL https://data.broadinstitute.org/single_cell_portal/rsem/rsem_${RESOURCES_VERSION}.tar.gz
+ENV DROPSEQ_DOWNLOAD_URL https://mccarrolllab.com/download/922
 
 ######################
 ## Dependencies and Tools
@@ -103,3 +104,13 @@ RUN echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_devt
     echo "biocLite()" >> ${SRC}/install_devtools.R && \
     echo "biocLite(\"YosefLab/scone\", dependencies=TRUE)" >> ${SRC}/install_devtools.R && \
     Rscript ${SRC}/install_devtools.R
+
+##############
+### Download DropSeq
+WORKDIR ${BIN}
+RUN wget ${DROPSEQ_DOWNLOAD_URL} && \
+    unzip Drop-seq_tools-1.12.zip
+
+##############
+#### Update PATHS
+PATH=${PATH}:${BIN}/Drop-seq_tools-1.12

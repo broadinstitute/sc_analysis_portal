@@ -135,9 +135,9 @@ class QCParser:
         # (14) percentage of intergenic reads
         # (15) percentage of mRNA reads
         # (16) the coefficient of variation of coverage
-        # (17) mean 5’ Bias
-        # (18) mean 3’ Bias
-        # (19) mean 5’ to 3’ Bias.
+        # (17) mean 5 Bias
+        # (18) mean 3 Bias
+        # (19) mean 5 to 3 Bias.
         return(self.parse_piccard_output(in_file=RNASeqQC_file,
                                          header_key="Sample",
                                          metrics=[]))

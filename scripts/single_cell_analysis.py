@@ -13,8 +13,8 @@ __status__ = "Development"
 import os
 import sys
 # Add sciedpiper
-sys.path.insert(0,os.path.sep.join([os.path.dirname(os.path.realpath(__file__)), "SciEDPipeR"]))
-sys.path.insert(0,os.path.sep.join([os.path.dirname(os.path.realpath(__file__)), "SciEDPipeR", "sciedpiper"]))
+sys.path.insert(0,os.path.sep.join([os.path.dirname(os.path.realpath(__file__)), "..", "src", "SciEDPipeR"]))
+sys.path.insert(0,os.path.sep.join([os.path.dirname(os.path.realpath(__file__)), "..", "src", "SciEDPipeR", "sciedpiper"]))
 import sciedpiper.Command as Command
 import sciedpiper.PipelineRunner as PipelineRunner
 
@@ -268,7 +268,7 @@ class SingleCellQC( PipelineRunner.PipelineRunner ):
         ## RNASeqQC
         rnaseqc_cmdline = " ".join([ "java -Xmx4g -jar RNA-SeQC.jar",
                                      "-n 1000",
-                                     "-s \"sample|\""+dedup_bam+"\"|RNASeQC",
+                                     "-s \"sample|"+dedup_bam+"|RNASeQC\"",
                                      "-t", args_parsed.gtf,
                                      "-r", args_parsed.reference,
                                      "-o", rnaseqc_out_dir])
@@ -279,7 +279,8 @@ class SingleCellQC( PipelineRunner.PipelineRunner ):
         rnaseqc_cmd = Command.Command( str_cur_command = rnaseqc_cmdline,
                                        lstr_cur_dependencies = rnaseqc_deps,
                                        lstr_cur_products = rnaseqc_prods )
-        #commands.append( rnaseqc_cmd )
+        commands.append( rnaseqc_cmd )
+
         ## Collect RNASeq Metrics
         rnametrics_cmdline = " ".join([ "java -jar CollectRnaSeqMetrics.jar",
                                         "I="+dedup_bam,

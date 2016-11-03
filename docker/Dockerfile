@@ -7,8 +7,9 @@ MAINTAINER ttickle@broadinstitute.org
 
 ## Constants
 ### SOFTWARE versions
+ENV BOWTIE_VERSION 1.1.2-3
 ENV PICARD_VERSION 2.0.1
-ENV R_VERSION 3.3.1-1xenial0
+ENV R_VERSION 3.3.2-1xenial0
 ENV RNASEQQC_VERSION v1.1.8
 ENV RSEM_VERSION v1.2.31
 ENV RESOURCES_VERSION v1
@@ -21,7 +22,7 @@ ENV SRC /usr/local/src
 ### URLS
 ENV PICARD_URL https://github.com/broadinstitute/picard/releases/download/${PICARD_VERSION}/picard-tools-${PICARD_VERSION}.zip
 ENV RESOURCES_URL https://data.broadinstitute.org/single_cell_portal/rsem/rsem_${RESOURCES_VERSION}.tar.gz
-ENV DROPSEQ_DOWNLOAD_URL https://mccarrolllab.com/download/922
+ENV DROPSEQ_DOWNLOAD_URL http://mccarrolllab.com/download/922
 
 ######################
 ## Dependencies and Tools
@@ -29,19 +30,15 @@ ENV DROPSEQ_DOWNLOAD_URL https://mccarrolllab.com/download/922
 ##############
 ## Helper tools
 RUN apt-get update && \
-    apt-get install -y git && \
-    apt-get install -y unzip && \
-    apt-get install -y wget
+    apt-get install -y apt-utils git unzip wget
 
 ##############
 ## System tools for devtools
-RUN apt-get install -y libssl-dev && \
-    apt-get install -y libcurl4-openssl-dev && \
-    apt-get install -y libxml2-dev
+RUN apt-get install -y libssl-dev libcurl4-openssl-dev libxml2-dev
 
 ##############
 ## Install Bowtie
-RUN apt-get install -y bowtie
+RUN apt-get install -y bowtie=${BOWTIE_VERSION}
 
 ##############
 ## C++ for RSEM
@@ -51,7 +48,8 @@ RUN apt-get install -y build-essential gcc-multilib
 ## FastQC
 RUN wget http://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.5.zip -P ${BIN} && \
     unzip ${BIN}/fastqc_v0.11.5.zip -d ${BIN} && \
-    chmod +x ${BIN}/FastQC/fastqc
+    chmod +x ${BIN}/FastQC/fastqc && \
+    rm ${BIN}/fastqc_v0.11.5.zip
 
 ##############
 ## JAVA 1.8 for PICARD tools
@@ -108,8 +106,10 @@ RUN echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_devt
 ##############
 ### Download DropSeq
 WORKDIR ${BIN}
-RUN wget ${DROPSEQ_DOWNLOAD_URL} && \
-    unzip Drop-seq_tools-1.12.zip
+RUN wget ${DROPSEQ_DOWNLOAD_URL} --no-check-certificate && \
+    mv ${BIN}/922 ${BIN}/Drop-seq_tools.zip && \
+    unzip ${BIN}/Drop-seq_tools.zip && \
+    rm ${BIN}/Drop-seq_tools.zip
 
 ##############
 #### Update PATHS

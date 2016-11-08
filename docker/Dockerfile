@@ -8,11 +8,13 @@ MAINTAINER ttickle@broadinstitute.org
 ## Constants
 ### SOFTWARE versions
 ENV BOWTIE_VERSION 1.1.2-3
+ENV BOWTIE2_VERSION 2.2.6-2
 ENV PICARD_VERSION 2.0.1
 ENV R_VERSION 3.3.2-1xenial0
 ENV RNASEQQC_VERSION v1.1.8
 ENV RSEM_VERSION v1.2.31
 ENV RESOURCES_VERSION v1
+ENV SAMTOOLS_VERSION 1.3.1
 
 ### locations
 ENV BIN /usr/local/bin
@@ -24,6 +26,10 @@ ENV PICARD_URL https://github.com/broadinstitute/picard/releases/download/${PICA
 ENV RESOURCES_URL https://data.broadinstitute.org/single_cell_portal/rsem/rsem_${RESOURCES_VERSION}.tar.gz
 ENV DROPSEQ_DOWNLOAD_URL http://mccarrolllab.com/download/922
 
+### Update PATHS
+ENV PATH=${SRC}/sc_analysis_portal/scripts:${SRC}/sc_analysis_portal/bin:${BIN}/Drop-seq_tools-1.12:${BIN}/RSEM:${BIN}/FastQC:${PATH}
+ENV PYTHONPATH=${SRC}/sc_analysis_portal/src/SciEDPiper:${SRC}/sc_analysis_portal/src/SciEDPiper/sciedpiper:${PYTHONPATH}
+
 ######################
 ## Dependencies and Tools
 ######################
@@ -34,11 +40,12 @@ RUN apt-get update && \
 
 ##############
 ## System tools for devtools
-RUN apt-get install -y libssl-dev libcurl4-openssl-dev libxml2-dev
+## Samtools needs libncurses5-dev libncursesw5-dev
+RUN apt-get install -y libssl-dev libcurl4-openssl-dev libxml2-dev libncurses5-dev libncursesw5-dev
 
 ##############
 ## Install Bowtie
-RUN apt-get install -y bowtie=${BOWTIE_VERSION}
+RUN apt-get install -y bowtie=${BOWTIE_VERSION} bowtie2=${BOWTIE2_VERSION}
 
 ##############
 ## C++ for RSEM
@@ -63,11 +70,20 @@ RUN echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-s
 
 ##############
 ## PICARD tools
+WORKDIR ${SRC}
 RUN wget -P ${SRC} ${PICARD_URL} && \
     unzip ${SRC}/picard-tools-${PICARD_VERSION}.zip -d ${SRC} && \
     mv ${SRC}/picard-tools-${PICARD_VERSION}/* ${BIN} && \
     rm -r ${SRC}/picard-tools-${PICARD_VERSION} && \
     rm ${SRC}/picard-tools-${PICARD_VERSION}.zip
+
+##############
+## Samtools
+WORKDIR ${BIN}
+RUN wget https://github.com/samtools/samtools/releases/download/${SAMTOOLS_VERSION}/samtools-${SAMTOOLS_VERSION}.tar.bz2
+RUN tar -jxvf samtools-${SAMTOOLS_VERSION}.tar.bz2 -C ${BIN}
+WORKDIR ${BIN}/samtools-${SAMTOOLS_VERSION}
+RUN make prefix=/usr/local install
 
 ##############
 ## Perl for RSEM
@@ -97,11 +113,11 @@ RUN wget http://www.broadinstitute.org/cancer/cga/tools/rnaseqc/RNA-SeQC_${RNASE
 
 ##############
 ## Scone
-RUN echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_devtools.R && \
-    echo "biocLite(\"devtools\")" >> ${SRC}/install_devtools.R && \
-    echo "biocLite()" >> ${SRC}/install_devtools.R && \
-    echo "biocLite(\"YosefLab/scone\", dependencies=TRUE)" >> ${SRC}/install_devtools.R && \
-    Rscript ${SRC}/install_devtools.R
+#RUN echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_devtools.R && \
+#    echo "biocLite(\"devtools\")" >> ${SRC}/install_devtools.R && \
+#    echo "biocLite()" >> ${SRC}/install_devtools.R && \
+#    echo "biocLite(\"YosefLab/scone\", dependencies=TRUE)" >> ${SRC}/install_devtools.R && \
+#    Rscript ${SRC}/install_devtools.R
 
 ##############
 ### Download DropSeq
@@ -112,5 +128,6 @@ RUN wget ${DROPSEQ_DOWNLOAD_URL} --no-check-certificate && \
     rm ${BIN}/Drop-seq_tools.zip
 
 ##############
-#### Update PATHS
-PATH=${PATH}:${BIN}/Drop-seq_tools-1.12
+### Pull in the code for the analysis
+WORKDIR ${SRC}
+RUN git clone --recursive https://github.com/broadinstitute/sc_analysis_portal.git

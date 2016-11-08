@@ -148,7 +148,14 @@ class PrepareSingleCell( PipelineRunner.PipelineRunner ):
                                         rsem_index_prefix ])
         rsem_index_deps = [ project_gtf,
                             project_fasta ]
-        rsem_index_prods = [ rsem_index_prefix ]
+        rsem_index_prods = [ rsem_index_prefix + ".1.bt2",
+                             rsem_index_prefix + ".2.bt2",
+                             rsem_index_prefix + ".3.bt2",
+                             rsem_index_prefix + ".4.bt2",
+                             rsem_index_prefix + ".1.ebwt",
+                             rsem_index_prefix + ".2.ebwt",
+                             rsem_index_prefix + ".3.ebwt",
+                             rsem_index_prefix + ".4.ebwt" ]
         rsem_index_cmd = Command.Command( str_cur_command = rsem_index_cmdline,
                                        lstr_cur_dependencies = rsem_index_deps,
                                        lstr_cur_products = rsem_index_prods )

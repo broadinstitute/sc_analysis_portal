@@ -341,8 +341,8 @@ class SingleCellQC( PipelineRunner.PipelineRunner ):
                                          "--collect_insert", insert_size_summary_file,
                                          "--collect_rnaseq", collect_rna_metric_file,
                                          "--fastqqc", fastq_out_file,
-                                         "--complexity", complexity_file,
-                                         "--rnaseqqc", rnaseqc_out_file] )
+                                         "--complexity", complexity_file] )
+        #                                 "--rnaseqqc", rnaseqc_out_file] )
         consolidate_deps = [ alignment_summary_file, insert_size_summary_file,
                              collect_rna_metric_file, fastq_out_file,
                              complexity_file, rnaseqc_out_file ]

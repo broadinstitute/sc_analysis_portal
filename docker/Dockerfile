@@ -109,7 +109,8 @@ RUN git clone https://github.com/deweylab/RSEM.git && \
 ##############
 ## RNASEQ QC
 WORKDIR ${BIN}
-RUN wget http://www.broadinstitute.org/cancer/cga/tools/rnaseqc/RNA-SeQC_${RNASEQQC_VERSION}.jar
+RUN wget http://www.broadinstitute.org/cancer/cga/tools/rnaseqc/RNA-SeQC_${RNASEQQC_VERSION}.jar && \
+    mv ${BIN}/RNA-SeQC_${RNASEQQC_VERSION}.jar ${BIN}/RNA-SeQC.jar
 
 ##############
 ## Scone

@@ -1,17 +1,29 @@
-today=`date | cut -d " " -f 3,2,4 --output-delimiter=_ | cut -d ":" -f 1,2,3 --output-delimiter=_`
-resources=test_data/resources
-run_output=testing_pipeline_${today}
-samples=testing_data/samples
+IMAGE=4c78f1d77a87
+resources=/home/ubuntu/data_for_run
+run_output=/home/ubuntu/testing_pipeline_run
+samples=/home/ubuntu/data
 
-python scripts/single_cell_analysis.py \
-    --gtf ${resources}/hg19_22_abridged.gtf \
-    --log ${run_output}/test_pipeline.log \
+sudo docker run \
+    -v ${resources}:/usr/local/data \
+    -v ${run_output}:/usr/local/data/test \
+    -v ${samples}:/usr/local/data/samples \
+    ${IMAGE} single_cell_analysis.py \
+    --gtf /usr/local/data/hg19.gtf \
     --no_trim \
-    --out_dir ${run_output} \
-    --reference_fasta ${resources}/hg19_22_abridged.fa \
-    --reference_flat ${resources}/hg19_22_abridged.refFlat \
-    --rrna_intervals ${resources}/hg19_22_abridged.rRNA.intervals \
-    --rsem_index ${resources}/hg19_22_abridged \
-    --sample_left ${samples}/no_barcodes_left.fq \
-    --sample_right ${samples}/no_barcodes_right.fq \
-    --update "trimmomatic.jar:/seq/regev_genome_portal/SOFTWARE/Trimmomatic"
+    --out_dir /usr/local/data/test \
+    --reference_fasta /usr/local/data/hg19.fasta \
+    --reference_flat /usr/local/data/hg19.refFlat \
+    --rrna_intervals /usr/local/data/hg19.rRNA.intervals \
+    --rsem_index /usr/local/data/hg19 \
+    --sample_left /usr/local/data/samples/Left_10000.fq \
+    --sample_right /usr/local/data/samples/Right_10000.fq \
+    --update "trimmomatic.jar:/usr/local/bin/Trimmomatic" \
+    --test
+
+sudo docker run -it \
+    -v ${resources}:/usr/local/data \
+    -v ${run_output}:/usr/local/data/test \
+    -v ${samples}:/usr/local/data/samples \
+    ${IMAGE} bash
+
+# --log /usr/local/data/test/test_pipeline_run.log \

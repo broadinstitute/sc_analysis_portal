@@ -104,6 +104,7 @@ class QCParser:
         with open(fastqc_file, "r") as qc_file:
             qc_reader = csv.reader(qc_file)
             for tokens in qc_reader:
+                print(tokens)
                 if tokens[0] == dup_key:
                     output[self.make_safe_key(dup_key)] = tokens[1]
                     return(output)
@@ -149,8 +150,14 @@ class QCParser:
         :returns: A dict of sample to metric pairings (sample name = key)
         :rtype: Dict {metric:value}
         """
-        # TODO
-        return({})
+        # TODO Check quality metrics
+        return(self.parse_piccard_output(in_file=CollectRNAMetrics_file,
+                                         header_key="PF_BASES",
+                                         metrics=["PCT_RIBOSOMAL_BASES","PCT_CODING_BASES",
+                                                  "PCT_UTR_BASES","INTRONIC_BASES",
+                                                  "PCT_INTERGENIC_BASES","PCT_MRNA_BASES",
+                                                  "MEDIAN_CV_COVERAGE","MEDIAN_5PRIME_BIAS",
+                                                  "MEDIAN_3PRIME_BIAS","MEDIAN_5PRIME_TO_3PRIME_BIAS"]))
 
     def parse_estimate_library_complexity(self, estimateLC_file):
         """ Parse EstimateLibraryComplexity.jar output.

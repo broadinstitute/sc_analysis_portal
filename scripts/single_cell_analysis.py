@@ -266,20 +266,20 @@ class SingleCellQC( PipelineRunner.PipelineRunner ):
 
         # Run QC
         ## RNASeqQC
-        rnaseqc_cmdline = " ".join([ "java -Xmx4g -jar RNA-SeQC.jar",
-                                     "-n 1000",
-                                     "-s \"sample|"+dedup_bam+"|RNASeQC\"",
-                                     "-t", args_parsed.gtf,
-                                     "-r", args_parsed.reference,
-                                     "-o", rnaseqc_out_dir])
-        rnaseqc_deps = [ dedup_bam,
-                         args_parsed.gtf,
-                         args_parsed.reference ]
-        rnaseqc_prods = [ rnaseqc_out_dir ]
-        rnaseqc_cmd = Command.Command( str_cur_command = rnaseqc_cmdline,
-                                       lstr_cur_dependencies = rnaseqc_deps,
-                                       lstr_cur_products = rnaseqc_prods )
-        commands.append( rnaseqc_cmd )
+        #rnaseqc_cmdline = " ".join([ "java -Xmx4g -jar RNA-SeQC.jar",
+        #                             "-n 1000",
+        #                             "-s \"sample|"+dedup_bam+"|RNASeQC\"",
+        #                             "-t", args_parsed.gtf,
+        #                             "-r", args_parsed.reference,
+        #                             "-o", rnaseqc_out_dir])
+        #rnaseqc_deps = [ dedup_bam,
+        #                 args_parsed.gtf,
+        #                 args_parsed.reference ]
+        #rnaseqc_prods = [ rnaseqc_out_dir ]
+        #rnaseqc_cmd = Command.Command( str_cur_command = rnaseqc_cmdline,
+        #                               lstr_cur_dependencies = rnaseqc_deps,
+        #                               lstr_cur_products = rnaseqc_prods )
+        #commands.append( rnaseqc_cmd )
 
         ## Collect RNASeq Metrics
         rnametrics_cmdline = " ".join([ "java -jar picard.jar CollectRnaSeqMetrics",

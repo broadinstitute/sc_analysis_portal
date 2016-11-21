@@ -226,7 +226,7 @@ class SingleCellQC( PipelineRunner.PipelineRunner ):
 
         # Prep for QC
         ## Add_rg
-        add_rg_cmdline = " ".join([ "java -jar AddOrReplaceReadGroups.jar",
+        add_rg_cmdline = " ".join([ "java -jar picard.jar AddOrReplaceReadGroups",
                                     "I="+rsem_output_gene_bam,
                                     "O="+add_rg_bam,
                                     "SO=coordinate",
@@ -241,7 +241,7 @@ class SingleCellQC( PipelineRunner.PipelineRunner ):
                                       lstr_cur_products = add_rg_prods )
         commands.append( add_rg_cmd )
         ## Reorder_bam
-        reorder_cmdline = " ".join([ "java -Xmx4g -jar ReorderSam.jar",
+        reorder_cmdline = " ".join([ "java -Xmx4g -jar picard.jar ReorderSam",
                                      "I="+add_rg_bam,
                                      "R="+args_parsed.reference,
                                      "O="+reorder_bam ])
@@ -252,7 +252,7 @@ class SingleCellQC( PipelineRunner.PipelineRunner ):
                                        lstr_cur_products = reorder_prods )
         commands.append( reorder_cmd )
         ## Mark Duplicates
-        dup_cmdline = " ".join([ "java -jar MarkDuplicates.jar",
+        dup_cmdline = " ".join([ "java -jar picard.jar MarkDuplicates",
                                  "I="+reorder_bam,
                                  "O="+dedup_bam,
                                  "CREATE_INDEX=true",
@@ -282,7 +282,7 @@ class SingleCellQC( PipelineRunner.PipelineRunner ):
         commands.append( rnaseqc_cmd )
 
         ## Collect RNASeq Metrics
-        rnametrics_cmdline = " ".join([ "java -jar CollectRnaSeqMetrics.jar",
+        rnametrics_cmdline = " ".join([ "java -jar picard.jar CollectRnaSeqMetrics",
                                         "I="+dedup_bam,
                                         "O="+collect_rna_metric_file,
                                         "REF_FLAT="+args_parsed.reference_flat,
@@ -297,7 +297,7 @@ class SingleCellQC( PipelineRunner.PipelineRunner ):
                                        lstr_cur_products = rnametrics_prods )
         commands.append( rnametrics_cmd )
         ## Estimate Library Complexity
-        est_cmdline = " ".join([ "java -jar EstimateLibraryComplexity.jar",
+        est_cmdline = " ".join([ "java -jar picard.jar EstimateLibraryComplexity",
                                  "I="+dedup_bam,
                                  "O="+complexity_file ])
         est_deps = [ dedup_bam ]
@@ -307,7 +307,7 @@ class SingleCellQC( PipelineRunner.PipelineRunner ):
                                    lstr_cur_products = est_prods )
         commands.append( est_cmd )
         ## Collect Alignment Summary Metrics
-        algnmetric_cmdline = " ".join([ "java -jar CollectAlignmentSummaryMetrics.jar",
+        algnmetric_cmdline = " ".join([ "java -jar picard.jar CollectAlignmentSummaryMetrics",
                                         "REFERENCE_SEQUENCE="+args_parsed.reference,
                                         "INPUT="+dedup_bam,
                                         "OUTPUT="+alignment_summary_file ])
@@ -319,7 +319,7 @@ class SingleCellQC( PipelineRunner.PipelineRunner ):
                                         lstr_cur_products = algnmetric_prods )
         commands.append( algnmetric_cmd )
         ## Collect Insert Size
-        insert_cmdline = " ".join([ "java -jar CollectInsertSizeMetrics.jar",
+        insert_cmdline = " ".join([ "java -jar picard.jar CollectInsertSizeMetrics",
                                     "I="+dedup_bam,
                                     "O="+insert_size_summary_file,
                                     "H="+insert_size_summary_pdf,

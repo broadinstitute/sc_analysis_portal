@@ -24,7 +24,6 @@ ENV SRC /usr/local/src
 ### URLS
 ENV PICARD_URL https://github.com/broadinstitute/picard/releases/download/${PICARD_VERSION}/picard-tools-${PICARD_VERSION}.zip
 ENV RESOURCES_URL https://data.broadinstitute.org/single_cell_portal/rsem/rsem_${RESOURCES_VERSION}.tar.gz
-ENV DROPSEQ_DOWNLOAD_URL http://mccarrolllab.com/download/922
 
 ### Update PATHS
 ENV PATH=${SRC}/sc_analysis_portal/scripts:${SRC}/sc_analysis_portal/bin:${BIN}/Drop-seq_tools-1.12:${BIN}/RSEM:${BIN}/FastQC:${PATH}
@@ -111,22 +110,6 @@ RUN git clone https://github.com/deweylab/RSEM.git && \
 WORKDIR ${BIN}
 RUN wget http://www.broadinstitute.org/cancer/cga/tools/rnaseqc/RNA-SeQC_${RNASEQQC_VERSION}.jar && \
     mv ${BIN}/RNA-SeQC_${RNASEQQC_VERSION}.jar ${BIN}/RNA-SeQC.jar
-
-##############
-## Scone
-#RUN echo "source(\"https://bioconductor.org/biocLite.R\")" > ${SRC}/install_devtools.R && \
-#    echo "biocLite(\"devtools\")" >> ${SRC}/install_devtools.R && \
-#    echo "biocLite()" >> ${SRC}/install_devtools.R && \
-#    echo "biocLite(\"YosefLab/scone\", dependencies=TRUE)" >> ${SRC}/install_devtools.R && \
-#    Rscript ${SRC}/install_devtools.R
-
-##############
-### Download DropSeq
-WORKDIR ${BIN}
-RUN wget ${DROPSEQ_DOWNLOAD_URL} --no-check-certificate && \
-    mv ${BIN}/922 ${BIN}/Drop-seq_tools.zip && \
-    unzip ${BIN}/Drop-seq_tools.zip && \
-    rm ${BIN}/Drop-seq_tools.zip
 
 ##############
 ### Pull in the code for the analysis

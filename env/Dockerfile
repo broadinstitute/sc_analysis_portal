@@ -29,11 +29,4 @@ RUN echo "deb https://dl.bintray.com/sbt/debian /" | tee -a /etc/apt/sources.lis
 
 # Code
 ENV /bin
-git clone https://github.com/broadinstitute/cromwell.git
-ENV /bin/cromwell
-sbt assembly
-## Error
-## /usr/share/sbt-launcher-packaging/bin/sbt-launch-lib.bash: line 41:  8779 Killed                  "$@"
-
-# Jar is built in target/scala-2.11
-# try running with java -jar cromwell.jar
+wget https://github.com/broadinstitute/cromwell/releases/download/25/cromwell-25.jar

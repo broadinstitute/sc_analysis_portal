@@ -28,5 +28,5 @@ RUN echo "deb https://dl.bintray.com/sbt/debian /" | tee -a /etc/apt/sources.lis
 # Need docker running
 
 # Code
-ENV /bin
+WORKDIR /bin
 wget https://github.com/broadinstitute/cromwell/releases/download/25/cromwell-25.jar

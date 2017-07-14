@@ -6,7 +6,6 @@ workflow single_cell_analysis_portal {
     File in_index
     File in_left_sample
     File in_negative_controls
-    File in_output_dir
     File in_reference
     File in_ref_flat
     File in_ribosome_interval
@@ -21,7 +20,6 @@ workflow single_cell_analysis_portal {
     scatter (name in sample_names){
         call run_pipeline {
             input: gtf=${in_gtf},
-                   out_dir=${in_output_dir},
                    reference_fasta=${in_reference},
                    reference_flat=${in_ref_flat},
                    rsem_index=${in_index},
@@ -34,15 +32,14 @@ workflow single_cell_analysis_portal {
                    platform=${in_platform},
                    threads=${in_threads},
         }
-        call consolidate_metrics { input: files=run_pipeline.consolidated_qc, out_dir=in_output_dir }
-        call consolidate_counts { input: files=run_pipeline.rsem_gene_results, out_dir=in_output_dir }
-        call consolidate_tpms { input: files=run_pipeline.rsem_gene_results, out_dir=in_output_dir }
-        call scone { input: count_matrix=consolidate_counts.out, technical_batches=${in_technical_batches}, biological_batches=${in_biological_batches}, negative_controls=${in_negative_controls}, out_dir=${in_out_dir}, qc_matrix=consoliate_metrics.out}
+        call consolidate_metrics { input: files=run_pipeline.consolidated_qc }
+        call consolidate_counts { input: files=run_pipeline.rsem_gene_results }
+        call consolidate_tpms { input: files=run_pipeline.rsem_gene_results }
+        call scone { input: count_matrix=consolidate_counts.out, technical_batches=${in_technical_batches}, biological_batches=${in_biological_batches}, negative_controls=${in_negative_controls}, qc_matrix=consoliate_metrics.out}
     }
 
 task align_qc {
     File gtf
-    File out_dir
     File reference_fasta
     File reference_flat
     File rsem_index
@@ -69,46 +66,44 @@ task align_qc {
             --add_library ${library} \
             --add_platform ${platform} \
             --threads ${threads} \
-            --out_dir ${out_dir}
     >>>
 
     output {
-        File trim_1_paired = "${out_dir}/qc/rnaseqc/${sample_name}_1P.fq.gz"
-        File trim_1_unpiared = "${out_dir}/qc/rnaseqc/${sample_name}_1U.fq.gz"
-        File trim_2_paired = "${out_dir}/qc/rnaseqc/${sample_name}_2P.fq.gz"
-        File trim_2_unpiared = "${out_dir}/qc/rnaseqc/${sample_name}_2U.fq.gz"
-        File fastqc = "${out_dir}/qc/fast_qc/${sample_name}_fastqc_data.txt"
-        File rnaseqc = "${out_dir}/qc/rnaseq_qc/${sample_name}_metrics.tsv"
-        File rsem_gene_bam = "${out_dir}/bam/${sample_name}.genome.bam"
-        File rsem_gene_results = "${out_dir}/bam/${sample_name}.genes.results"
-        File rsem_trans_bam = "${out_dir}/bam/${sample_name}.transcript.bam"
-        File rsem_trans_results = "${out_dir}/bam/${sample_name}.isoforms.results"
-        File rsem_stats = "${out_dir}/bam/${sample_name}.stats"
-        File prepped_bam = "${out_dir}/bam/${sample_name}_arg_reorder_dedup.genome.bam"
-        File duplicate_metrics = "${out_dir}/qc/${sample_name}_duplicate_metrics.txt"
-        File rna_seq_metrics = "${out_dir}/qc/${sample_name}_collect_rna_seq_metrics.txt"
-        File library_metrics = "${out_dir}/qc/${sample_name}_estimate_library_complexity.txt"
-        File alignment_metrics = "${out_dir}/qc/${sample_name}_alignment_summary_metrics.txt"
-        File qc_insert_size_txt = "${out_dir}/qc/${sample_name}_insert_size.txt"
-        File qc_insert_size_pdf = "${out_dir}/qc/${sample_name}_insert_size.pdf"
-        File consolidated_qc = "${out_dir}/qc/${sample_name}_consolidate.tsv"
-        File consolidated_qc_log = "${out_dir}/qc/${sample_name}_consolidate.log"
+        File trim_1_paired = "qc/rnaseqc/${sample_name}_1P.fq.gz"
+        File trim_1_unpiared = "qc/rnaseqc/${sample_name}_1U.fq.gz"
+        File trim_2_paired = "qc/rnaseqc/${sample_name}_2P.fq.gz"
+        File trim_2_unpiared = "qc/rnaseqc/${sample_name}_2U.fq.gz"
+        File fastqc = "qc/fast_qc/${sample_name}_fastqc_data.txt"
+        File rnaseqc = "qc/rnaseq_qc/${sample_name}_metrics.tsv"
+        File rsem_gene_bam = "bam/${sample_name}.genome.bam"
+        File rsem_gene_results = "bam/${sample_name}.genes.results"
+        File rsem_trans_bam = "bam/${sample_name}.transcript.bam"
+        File rsem_trans_results = "bam/${sample_name}.isoforms.results"
+        File rsem_stats = "bam/${sample_name}.stats"
+        File prepped_bam = "bam/${sample_name}_arg_reorder_dedup.genome.bam"
+        File duplicate_metrics = "qc/${sample_name}_duplicate_metrics.txt"
+        File rna_seq_metrics = "qc/${sample_name}_collect_rna_seq_metrics.txt"
+        File library_metrics = "qc/${sample_name}_estimate_library_complexity.txt"
+        File alignment_metrics = "qc/${sample_name}_alignment_summary_metrics.txt"
+        File qc_insert_size_txt = "qc/${sample_name}_insert_size.txt"
+        File qc_insert_size_pdf = "qc/${sample_name}_insert_size.pdf"
+        File consolidated_qc = "qc/${sample_name}_consolidate.tsv"
+        File consolidated_qc_log = "qc/${sample_name}_consolidate.log"
     }
 }
 
 task consolidate_metrics {
     Array[File] files
-    File out_dir
     command <<<
         combine_matrix.py \
-            --log "${out_dir}/qc/qc_matrix.log" \
-            --out "${out_dir}/qc/qc_matrix.tsv" \
+            --log "qc/qc_matrix.log" \
+            --out "qc/qc_matrix.tsv" \
             ${sep=" " files}
     >>>
 
     output {
-        File log = "${out_dir}/qc/qc_matrix.log" \
-        File out = "${out_dir}/qc/qc_matrix.tsv"
+        File log = "qc/qc_matrix.log" \
+        File out = "qc/qc_matrix.tsv"
     }
 }
 
@@ -117,30 +112,29 @@ task consolidate_counts {
     File out_dir
     command <<<
         combine_matrix.py \
-            --log "${out_dir}/raw_counts.tsv" \
-            --out "${out_dir}/raw_counts.log" \
+            --log "raw_counts.tsv" \
+            --out "raw_counts.log" \
             --column "Counts" \
             ${sep=" " files}
     >>>
     output {
-        File log = "${out_dir}/raw_counts.log"
-        File out = "${out_dir}/raw_counts.tsv"
+        File log = "raw_counts.log"
+        File out = "raw_counts.tsv"
     }
 }
 
 task consolidate_tpms {
     Array[File] files
-    File out_dir
     command <<<
         combine_matrix.py \
-            --log "${out_dir}/raw_counts.tsv" \
-            --out "${out_dir}/raw_counts.log" \
+            --log "raw_counts.tsv" \
+            --out "raw_counts.log" \
             --column "TPM" \
             ${sep=" " files}
     >>>
     output {
-        File log = "${out_dir}/raw_tpms.log"
-        File out = "${out_dir}/raw_tpms.tsv"
+        File log = "raw_tpms.log"
+        File out = "raw_tpms.tsv"
     }
 }
 
@@ -149,7 +143,6 @@ task scone {
     File technical_batches
     File biological_batches
     File negative_controls
-    File out_dir
     File qc_matrix
 
     command <<<
@@ -160,9 +153,9 @@ task scone {
                  --qc=${qc_matrix} \
                  --verbose=0 \
                  --norm_adjust_bio=no \
-                 --out_dir="${out_dir}/normalizations"
+                 --out_dir="normalizations"
     >>>
     output {
-        File "${out_dir}/normalizations"
+        File "normalizations"
     }
 }

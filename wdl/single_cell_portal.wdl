@@ -18,7 +18,7 @@ workflow single_cell_analysis_portal {
     Int in_threads
 
     scatter (name in sample_names){
-        call run_pipeline {
+        call align_qc {
             input: gtf=${in_gtf},
                    reference_fasta=${in_reference},
                    reference_flat=${in_ref_flat},
